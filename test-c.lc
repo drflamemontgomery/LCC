@@ -1,0 +1,28 @@
+(include "stdio.h")
+
+(defun range-test :void ((test :int))
+  (cond 
+    (((< test 2) (printf "%d < 2\n" test))
+     ((< test 4) (printf "2 <= %d < 4\n" test))
+     ((< test 6) (printf "4 <= %d < 6\n" test))
+     ((< test 8) (printf "6 <= %d < 8\n" test))
+     (t (printf "8 <= %d\n" test))))
+  (case test 
+      ((1 (printf "test == 1\n"))
+       (3 (printf "test == 3\n"))
+       (44 (printf "test == 44\n"))
+       (7 (printf "test == 7\n"))
+       (t (printf "test == something else entirely\n")))))
+
+(defun main :int ((argc :int) (argv :**const char))
+  (let
+      ((test :int (+ 2 3 4 5 6 7 8 9))
+       (b :int (* test 3)))
+    (if (> test 2)
+        (printf "%d > 2\n" test)
+        (printf "%d <= 2\n" test))
+    (printf "test => %d\n" test)
+    (printf "b => %d\n" b)
+    (range-test test)))
+
+(defvar test-global :_Bool t)
