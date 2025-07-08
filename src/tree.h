@@ -2,32 +2,17 @@
 
 #include <stdbool.h>
 
+struct location {
+  int first_line;
+  int first_column;
+  int last_line;
+  int last_column;
+};
+
 enum tree_type {
-  FN_DECL,
-  PARM_DECL,
-  VAR_DECL,
-
-  TYPE_EXPR,
-  REFERENCE_EXPR,
-  SET_EXPR,
-  DEREF_EXPR,
-  ADDR_EXPR,
-  BINOP_EXPR,
-  COMPARE_EXPR,
-  COND_EXPR,
-  CASE_EXPR,
-
-  LET_STMT,
-
-  WHILE_STMT,
-  DOWHILE_STMT,
-  FOR_STMT,
-
-  IF_STMT,
-  COND_STMT,
-  CASE_STMT,
-
-  INCLUDE_STMT,
+#define DEFTREECODE(NAME, STR, ...) NAME,
+#include "tree.def"
+#undef DEFTREECODE
 };
 
 enum type_mod {
@@ -36,6 +21,7 @@ enum type_mod {
   MOD_VOLATILE,
   MOD_RESTRICT,
   MOD_ATOMIC,
+  MOD_MONOMORPH,
 };
 
 enum reference_expr_type {
@@ -79,147 +65,70 @@ struct type_ptr {
 struct tree {
   enum tree_type type;
   struct tree *next;
+  struct location loc;
 
   union {
-    struct {
-      char *name;
-      struct tree *type;
-      struct tree *arglist;
-      struct tree *body;
-    } fn_decl;
-
-    struct {
-      char *name;
-      struct tree *type;
-      struct tree *value;
-    } var_decl;
-
-    struct {
-      struct type_id *id;
-      struct type_ptr *ptr;
-    } type_expr;
-
-    struct {
-      enum reference_expr_type type;
-      union {
-        bool bval;
-        char cval;
-        int ival;
-        double fval;
-        char *symbol;
-        struct {
-          char *name;
-          struct tree *args;
-        } call;
-      };
-    } reference_expr;
-
-    struct {
-      struct tree *vars;
-      struct tree *body;
-    } let_stmt;
-
-    struct {
-      char *name;
-      struct tree *value;
-    } set_expr;
-
-    struct {
-      struct tree *condition;
-      struct tree *body;
-    } while_stmt;
-
-    struct {
-      struct tree *type;
-      struct tree *vars;
-      struct tree *condition;
-      struct tree *loop_eval;
-      struct tree *body;
-    } for_stmt;
-
-    struct {
-      char *path;
-    } include;
-
-    struct {
-      struct tree *expr;
-    } ref_expr;
-
-    struct {
-      char op;
-      struct tree *body;
-    } binop_expr;
-
-    struct {
-      enum compare_op op;
-      struct tree *lhs;
-      struct tree *rhs;
-    } compare_expr;
-
-    struct {
-      struct tree *condition;
-      struct tree *if_block;
-      struct tree *else_block;
-    } if_else_stmt;
-
-    struct {
-      struct tree *condition;
-      struct tree *body;
-    } cond_expr;
-
-    struct {
-      struct tree *exprs;
-    } cond_stmt;
-
-    struct {
-      struct tree *expr;
-      struct tree *body;
-    } case_expr;
-
-    struct {
-      struct tree *expr;
-      struct tree *cases;
-    } case_stmt;
+#define DEFTREECODE(ENUM, ID, ...) __VA_OPT__(struct {__VA_ARGS__} ID;)
+#include "tree.def"
+#undef DEFTREECODE
   };
 };
 
 struct tree *reverse_tree(struct tree *t);
 
-struct tree *build_fn(char *name, struct tree *ret_type, struct tree *arglist,
-                      struct tree *body);
-struct tree *build_var(enum tree_type type, char *name, struct tree *var_type,
-                       struct tree *value);
-struct tree *build_type_expr(struct type_id *id);
-struct tree *build_set_expr(char *name, struct tree *value);
-struct tree *build_binop(char binop, struct tree *body);
-struct tree *build_compare(enum compare_op op, struct tree *lhs,
-                           struct tree *rhs);
+struct tree *build_fn(struct location loc, char *name, struct tree *ret_type,
+                      struct tree *arglist, struct tree *body);
+struct tree *build_var(struct location loc, enum tree_type type, char *name,
+                       struct tree *var_type, struct tree *value);
+struct tree *build_type_expr(struct location loc, struct type_id *id);
+struct tree *build_set_expr(struct location loc, struct tree *name,
+                            struct tree *value, char mod);
+struct tree *build_binop(struct location loc, char binop, struct tree *body);
+struct tree *build_compare(struct location loc, enum compare_op op,
+                           struct tree *lhs, struct tree *rhs);
+struct tree *build_inc(struct location loc, struct tree *var);
+struct tree *build_dec(struct location loc, struct tree *var);
 
-struct tree *build_let_stmt(struct tree *vars, struct tree *body);
-struct tree *build_while_stmt(enum tree_type while_type, struct tree *condition,
-                              struct tree *body);
-struct tree *build_for_stmt(struct tree *type, struct tree *vars,
-                            struct tree *condition, struct tree *loop_eval,
+struct tree *build_let_stmt(struct location loc, struct tree *vars,
                             struct tree *body);
-struct tree *build_if_else_stmt(struct tree *condition, struct tree *if_block,
-                                struct tree *else_block);
-struct tree *build_cond_body(struct tree *condition, struct tree *body);
-struct tree *build_cond_stmt(struct tree *exprs);
-struct tree *build_case_body(struct tree *expr, struct tree *body);
-struct tree *build_case_stmt(struct tree *expr, struct tree *cases);
+struct tree *build_while_stmt(struct location loc, enum tree_type while_type,
+                              struct tree *condition, struct tree *body);
+struct tree *build_for_stmt(struct location loc, struct tree *type,
+                            struct tree *vars, struct tree *condition,
+                            struct tree *loop_eval, struct tree *body);
+struct tree *build_if_else_stmt(struct location loc, struct tree *condition,
+                                struct tree *if_block, struct tree *else_block);
+struct tree *build_cond_body(struct location loc, struct tree *condition,
+                             struct tree *body);
+struct tree *build_cond_stmt(struct location loc, struct tree *exprs);
+struct tree *build_case_body(struct location loc, struct tree *expr,
+                             struct tree *body);
+struct tree *build_case_stmt(struct location loc, struct tree *expr,
+                             struct tree *cases);
 
-struct tree *build_int_cst(int value);
-struct tree *build_char_cst(char value);
-struct tree *build_bool_cst(bool value);
-struct tree *build_string_cst(char *value);
-struct tree *build_float_cst(double value);
+struct tree *build_int_cst(struct location loc, int value);
+struct tree *build_char_cst(struct location loc, char value);
+struct tree *build_bool_cst(struct location loc, bool value);
+struct tree *build_string_cst(struct location loc, char *value);
+struct tree *build_float_cst(struct location loc, double value);
 
-struct tree *build_var_ref(char *var_name);
-struct tree *build_fn_call(char *fn_name, struct tree *args);
+struct tree *build_var_ref(struct location loc, char *var_name);
+struct tree *build_fn_call(struct location loc, char *fn_name,
+                           struct tree *args);
 
-struct tree *build_include(char *path);
-struct tree *build_deref(struct tree *expr);
-struct tree *build_addr(struct tree *expr);
+struct tree *build_include(struct location loc, struct tree *paths);
+struct tree *build_aref(struct location loc, struct tree *expr,
+                        struct tree *indices);
+struct tree *build_addr(struct location loc, struct tree *expr);
+struct tree *build_cast(struct location loc, struct tree *type,
+                        struct tree *expr);
+
+struct tree *build_lambda_list(struct location loc, struct tree *args,
+                               struct tree *optionals, struct tree *rest,
+                               struct tree *keys, struct tree *aux);
+
+struct tree *build_type_decl(struct location loc, struct tree *type,
+                             struct tree *symbol_list);
 
 struct tree *append_tree(struct tree *t, struct tree *next);
 
@@ -233,3 +142,8 @@ void print_tree(struct tree *t);
 
 void translate_to_var_name(char *var_name);
 int get_bool(struct tree *t); // -1 -> not a bool, 0 -> false, 1 -> false
+bool is_monomorph(struct tree *t);
+
+void resolve_pass(struct tree *t);
+const char *get_tree_type(struct tree *t);
+void copy_type_to_type(struct tree *dest, struct tree *src);

@@ -23,6 +23,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+extern int n_errors;
+
 #define log(msg, ...) fprintf(stderr, msg "\n" __VA_OPT__(, ) __VA_ARGS__)
 #define info(msg, ...)                                                         \
   log(TERM_BOLD TERM_BLUE "info: " TERM_RESET msg __VA_OPT__(, ) __VA_ARGS__)
@@ -33,11 +35,18 @@
   log(TERM_BOLD TERM_GREEN "success: " TERM_RESET msg __VA_OPT__(, )           \
           __VA_ARGS__)
 #define error(msg, ...)                                                        \
-  log(TERM_BOLD TERM_RED "error: " TERM_RESET msg __VA_OPT__(, ) __VA_ARGS__)
+  {                                                                            \
+    log(TERM_BOLD TERM_RED "error: " TERM_RESET msg __VA_OPT__(, )             \
+            __VA_ARGS__);                                                      \
+    n_errors++;                                                                \
+  }
 #define errorat(msg, ...)                                                      \
-  log(TERM_BOLD TERM_RED "error: " TERM_BOLD                                   \
-                         "%s:%d:%d: " TERM_RESET msg __VA_OPT__(, )            \
-                             __VA_ARGS__)
+  {                                                                            \
+    log(TERM_BOLD TERM_RED "error: " TERM_BOLD                                 \
+                           "%s:%d:%d: " TERM_RESET msg __VA_OPT__(, )          \
+                               __VA_ARGS__);                                   \
+    n_errors++;                                                                \
+  }
 #define logat(msg, ...)                                                        \
   log(TERM_BOLD "%s:%d:%d: " TERM_RESET msg __VA_OPT__(, ) __VA_ARGS__)
 

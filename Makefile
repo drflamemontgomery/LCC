@@ -1,6 +1,6 @@
 CC=gcc
 
-C_OBJS:=src/lexer.o src/lang.o src/tree.o
+C_OBJS:=src/lexer.o src/lang.o src/tree.o src/pass.o
 
 CFLAGS+= -lm -fsanitize=leak -g
 
@@ -21,7 +21,18 @@ src/lexer.c: src/lexer.lex src/lang.h
 $(EXE): $(C_OBJS)
 	$(CC) $(CFLAGS) $(C_OBJS) -o $(EXE)
 
+$(C_OBJS) : src/tree.def src/tree.h
+
+.PHONY: test.c
+test.c: test.lc
+	./$(EXE) test.lc > test.c
+
+test: $(EXE) test.c
+	$(CC) test.c -o test
+
 .PHONY: clean
 clean:
-	find . -name "*.o" -exec rm {} \;
+	rm -f $(C_OBJS)
+	rm -f src/lang.c src/lang.h src/lexer.c
+	rm -f src/c/lang.c src/c/lang.h src/c/lexer.c
 

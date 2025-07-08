@@ -1,0 +1,50 @@
+DEFTREECODE(FN_DECL, fn_decl, char *name; struct tree * type;
+            struct tree * arglist; struct tree * body;)
+DEFTREECODE(PARM_DECL, var_decl)
+DEFTREECODE(VAR_DECL, var_decl, char *name; struct tree * type;
+            struct tree * value;)
+DEFTREECODE(TYPE_DECL, type_decl, struct tree *type; struct tree * symbol_list;)
+
+DEFTREECODE(TYPE_EXPR, type_expr, struct type_id *id; struct type_ptr * ptr;)
+
+DEFTREECODE(
+    REFERENCE_EXPR, reference_expr, enum reference_expr_type type; union {
+      bool bval;
+      char cval;
+      int ival;
+      double fval;
+      char *symbol;
+      struct {
+        char *name;
+        struct tree *args;
+      } call;
+    };)
+DEFTREECODE(SET_EXPR, set_expr, struct tree *var; struct tree * value;
+            char mod;)
+DEFTREECODE(AREF_EXPR, ref_expr, struct tree *expr; struct tree * indices;)
+DEFTREECODE(ADDR_EXPR, ref_expr)
+DEFTREECODE(CAST_EXPR, cast_expr, struct tree *type; struct tree * expr;)
+DEFTREECODE(BINOP_EXPR, binop_expr, char op; struct tree * body;)
+DEFTREECODE(COMPARE_EXPR, compare_expr, enum compare_op op; struct tree * lhs;
+            struct tree * rhs;)
+DEFTREECODE(COND_EXPR, cond_expr, struct tree *condition; struct tree * body;)
+DEFTREECODE(CASE_EXPR, case_expr, struct tree *expr; struct tree * body;)
+
+DEFTREECODE(LET_STMT, let_stmt, struct tree *vars; struct tree * body;)
+
+DEFTREECODE(WHILE_STMT, while_stmt, struct tree *condition; struct tree * body;)
+DEFTREECODE(DOWHILE_STMT, while_stmt)
+DEFTREECODE(FOR_STMT, for_stmt, struct tree *type; struct tree * vars;
+            struct tree * condition; struct tree * loop_eval;
+            struct tree * body;)
+
+DEFTREECODE(IF_STMT, if_else_stmt, struct tree *condition;
+            struct tree * if_block; struct tree * else_block;)
+DEFTREECODE(COND_STMT, cond_stmt, struct tree *exprs;)
+DEFTREECODE(CASE_STMT, case_stmt, struct tree *expr; struct tree * cases;)
+
+DEFTREECODE(INCLUDE_STMT, include_stmt, struct tree *paths;)
+
+DEFTREECODE(LAMBDA_LIST, lambda_list, struct tree *args;
+            struct tree * optionals; struct tree * rest; struct tree * keys;
+            struct tree * aux;)

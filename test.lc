@@ -1,18 +1,33 @@
-(defun main: int
-  ((argc :int) (argv :**const char))
-  nil
-  t
-  (+ 1 2)
-  (cond 
-    ((eql 1 2)
-     (t (return 1))))
-  (case '3'
-    (('\050' (return '\x4a'))))
-  (for :i64 ((a 0)) (lt a 5) (inc a)))
+(include <stdio.h> <math.h>)
 
-(defun let-test: *const i32 ((a :i32)) (let ((a :i32 5) (b :f32 4) (c:*const u8 2)) t))
-(defun true :bool () t)
-(defun false :bool () nil 2)
-(defun while-test :void ()
-  (do-while nil (printf "do-while\n"))
-  (while nil (printf "while\n")))
+(defun main (argc argv)
+  (declare (type i32 argc) (type **i8 argv))
+  (printf "arglen %.2f:" (cast f32 argc))
+  (for ((i 0)) (< i argc) (inc i)
+       (declare (type i32 i))
+       (printf " %s" (aref argv i))
+    )
+  (printf "\n")
+  )
+
+
+;(defun let-test
+;    (initial another-variable
+;             &optional (opt nil)
+;             &rest body
+;             &key (a-key sym)
+;             &aux (a (+ 1 initial)) (b 4) (c 2))
+;    (declare (type int initial a b c) (type void let-test)))
+;(defun True ()
+;  (declare (type bool True)) (return t))
+;(defun False ()
+;  (declare (type bool False)) 2 (return nil))
+;(defun while-test  (a)
+;  (declare (type void while-test) (type int a))
+;  (do-while nil (printf "do-while\n"))
+;  (while nil (printf "while\n")))
+;(defun optional-test (a &optional (b 3) &aux (c (+ a b)))
+;  (declare (type int optional-test a b c))
+;  (return (* a b c)))
+
+(declaim (type int main))
