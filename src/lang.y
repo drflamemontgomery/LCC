@@ -136,7 +136,7 @@ body:
 ;
 
 body_expr:
-    %empty { $$ = NULL; }
+  %empty { $$ = NULL; }
 | exp body { $$ = append_tree($2, $1); }
 | control_stmt body { $$ = append_tree($2, $1); }
 | let_stmt body { $$ = append_tree($2, $1); }
@@ -282,7 +282,7 @@ symbol_list:
 
 string_list:
   STRING { $$ = build_string_cst(@1, $1); }
-| STRING symbol_list { $$ = append_tree($2, build_string_cst(@1, $1)); }
+| STRING string_list { $$ = append_tree($2, build_string_cst(@1, $1)); }
 ;
 
 %%
