@@ -111,4 +111,5 @@ not {MOVECOL(yyleng);return NOT; }
 
 [_a-zA-Z\$][\-a-zA-Z0-9\$]* {MOVECOL(yyleng); yylval->symbol = strdup(yytext); return SYMBOL; }
 @[_a-zA-Z\$][\-a-zA-Z0-9\$]* {MOVECOL(yyleng); yylval->symbol = strdup(&yytext[1]); return SYMBOL; }
+:[_a-zA-Z\$][\-a-zA-Z0-9\$]* {MOVECOL(yyleng); yylval->symbol = strdup(&yytext[1]); return SYMBOL_KEY; }
 . {MOVECOL(yyleng); return yytext[0]; }

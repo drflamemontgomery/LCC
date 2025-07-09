@@ -42,6 +42,7 @@ int n_errors = 0;
 %token <fval> FLOAT "float"
 %token <cval> CHAR "char"
 %token <symbol> SYMBOL "symbol"
+%token <symbol> SYMBOL_KEY "key"
 %token <symbol> STRING "string"
 
 %token CONST VOLATILE RESTRICT ATOMIC
@@ -59,7 +60,7 @@ int n_errors = 0;
 %token F32 F64 F128
 %token C32 C64 C128
 
-%type <ast> exp condition body body_expr call
+%type <ast> exp exp_list condition body body_expr call call_body
 
 %type <ast> include
 %type <ast> defvar fndecl //arglist arglist_fields
@@ -93,14 +94,17 @@ exp:
 | call { $$ = $1; }
 | defvar { $$ = $1; }
 ;
+exp_list:
+  exp { $$ = $1; }
+| exp exp_list { $$ = append_tree($2, $1); }
 condition: exp { $$ = $1; };
 
 call:
-  '(' SYMBOL body ')' { $$ = build_fn_call(@1, $2, $3); }
-| '(' '+' body ')' { $$ = build_binop(@1, '+', $3); }
-| '(' '-' body ')' { $$ = build_binop(@1, '-', $3); }
-| '(' '*' body ')' { $$ = build_binop(@1, '*', $3); }
-| '(' '/' body ')' { $$ = build_binop(@1, '/', $3); }
+  '(' SYMBOL call_body ')' { $$ = build_fn_call(@1, $2, $3); }
+| '(' '+' exp_list ')' { $$ = build_binop(@1, '+', $3); }
+| '(' '-' exp_list ')' { $$ = build_binop(@1, '-', $3); }
+| '(' '*' exp_list ')' { $$ = build_binop(@1, '*', $3); }
+| '(' '/' exp_list ')' { $$ = build_binop(@1, '/', $3); }
 | '(' '=' exp exp ')' { $$ = build_compare(@1, OP_EQL, $3, $4); }
 | '(' LT exp exp ')' { $$ = build_compare(@1, OP_LT, $3, $4); }
 | '(' GT exp exp ')' { $$ = build_compare(@1, OP_GT, $3, $4); }
@@ -114,7 +118,12 @@ call:
 | '(' INC exp ')' { $$ = build_inc(@1, $3); }
 | '(' DEC exp ')' { $$ = build_dec(@1, $3); }
 | '(' CAST type exp ')' { $$ = build_cast(@1, $3, $4); }
-| declaim_expr { $$ = $1; }
+;
+
+call_body:
+  %empty { $$ = NULL; }
+| exp call_body { $$ = append_tree($2, $1); }
+| SYMBOL_KEY exp call_body { $$ = append_tree($3, build_lambda_key(@1, $1, $2));}
 ;
 
 declaim_expr: '(' DECLAIM declarations ')' { $$ = $3; };
@@ -137,9 +146,10 @@ body:
 
 body_expr:
   %empty { $$ = NULL; }
-| exp body { $$ = append_tree($2, $1); }
-| control_stmt body { $$ = append_tree($2, $1); }
-| let_stmt body { $$ = append_tree($2, $1); }
+| exp body_expr { $$ = append_tree($2, $1); }
+| control_stmt body_expr { $$ = append_tree($2, $1); }
+| let_stmt body_expr { $$ = append_tree($2, $1); }
+| declaim_expr body_expr { $$ = append_tree($2, $1); }
 ;
 
 /*arglist:
@@ -253,8 +263,8 @@ lambda_key_args:
 ;
 
 lambda_key_body:
-  '(' SYMBOL SYMBOL ')' { $$ = build_var(@1, PARM_DECL, $3, NOTYPE, NULL); free($2);}
-| '(' SYMBOL SYMBOL ')' lambda_key_body { $$ = append_tree($5, build_var(@1, PARM_DECL, $3, NOTYPE, NULL)); free($2);}
+  '(' SYMBOL SYMBOL ')' { $$ = build_lambda_key(@1, $2, build_var(@3, PARM_DECL, $3, NOTYPE, NULL));}
+| '(' SYMBOL SYMBOL ')' lambda_key_body { $$ = append_tree($5, build_lambda_key(@1, $2, build_var(@3, PARM_DECL, $3, NOTYPE, NULL)));}
 ;
 
 lambda_aux_args:

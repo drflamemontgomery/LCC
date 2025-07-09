@@ -48,3 +48,4 @@ DEFTREECODE(INCLUDE_STMT, include_stmt, struct tree *paths;)
 DEFTREECODE(LAMBDA_LIST, lambda_list, struct tree *args;
             struct tree * optionals; struct tree * rest; struct tree * keys;
             struct tree * aux;)
+DEFTREECODE(LAMBDA_KEY, lambda_key, char *key_name; struct tree * expr;)

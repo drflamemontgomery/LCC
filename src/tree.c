@@ -42,6 +42,7 @@ struct tree *reverse_tree(struct tree *tree) {
 
 struct tree *alloc_tree(size_t n) {
   struct tree *t = calloc(n, sizeof(struct tree));
+  t->valid = true;
   return t;
 }
 
@@ -91,7 +92,6 @@ struct tree *build_type_expr(struct location loc, struct type_id *id) {
   struct tree *type = alloc_tree(1);
   type->type = TYPE_EXPR;
   type->loc = loc;
-  // info("type: %s", id->name);
 
   type->type_expr.id = id;
   return type;
@@ -100,6 +100,9 @@ struct tree *build_type_expr(struct location loc, struct type_id *id) {
 void _destroy_tree(struct tree *t) {
   if (t == NULL)
     return;
+  if (!t->valid)
+    return;
+  t->valid = false;
 
   switch (t->type) {
   case FN_DECL:
@@ -193,13 +196,19 @@ void _destroy_tree(struct tree *t) {
     }
     break;
   case INCLUDE_STMT:
-    destroy_tree(t->include_stmt.paths); break;
+    destroy_tree(t->include_stmt.paths);
+    break;
   case LAMBDA_LIST:
     destroy_tree(t->lambda_list.args);
     destroy_tree(t->lambda_list.optionals);
     destroy_tree(t->lambda_list.rest);
     destroy_tree(t->lambda_list.keys);
     destroy_tree(t->lambda_list.aux);
+    break;
+  case LAMBDA_KEY:
+    if (t->lambda_key.key_name)
+      free(t->lambda_key.key_name);
+    destroy_tree(t->lambda_key.expr);
     break;
   case TYPE_DECL:
     destroy_tree(t->type_decl.type);
@@ -255,11 +264,14 @@ static void _print_tree(struct tree *t) {
     struct tree *args = t->fn_decl.arglist;
     if (args != NULL) {
       if (args->type == LAMBDA_LIST) {
+        int n_lists = (args->lambda_list.args == NULL ? 0 : 1) +
+                      (args->lambda_list.optionals == NULL ? 0 : 1) +
+                      (args->lambda_list.rest == NULL ? 0 : 1) +
+                      (args->lambda_list.keys == NULL ? 0 : 1);
         for (struct tree *arg = args->lambda_list.args; arg != NULL;
              arg = arg->next) {
           _print_tree(arg);
-          if (arg->next == NULL && args->lambda_list.optionals == NULL &&
-              args->lambda_list.keys == NULL && args->lambda_list.rest == NULL)
+          if (arg->next == NULL && (--n_lists) <= 0)
             break;
           fprintf(stdout, ", ");
         }
@@ -271,9 +283,25 @@ static void _print_tree(struct tree *t) {
           }
           _print_tree(arg->var_decl.type);
           fprintf(stdout, " %s", arg->var_decl.name);
-          if (arg->next == NULL)
+          if (arg->next == NULL && (--n_lists) <= 0)
             break;
           fprintf(stdout, ", ");
+        }
+        for (struct tree *arg = args->lambda_list.keys; arg != NULL;
+             arg = arg->next) {
+          if (arg->type != LAMBDA_KEY) {
+            error("expected lambda_key");
+            continue;
+          }
+          _print_tree(arg->lambda_key.expr->var_decl.type);
+          fprintf(stdout, " %s", arg->lambda_key.expr->var_decl.name);
+          if (arg->next == NULL && (--n_lists) <= 0)
+            break;
+          fprintf(stdout, ", ");
+        }
+
+        if (args->lambda_list.rest != NULL) {
+          fprintf(stdout, "...");
         }
       } else {
         errorat("expected lambda_list but received %s", lcc_current_file,
@@ -925,6 +953,7 @@ struct tree *build_lambda_list(struct location loc, struct tree *args,
 struct tree *build_type_decl(struct location loc, struct tree *type,
                              struct tree *symbol_list) {
   struct tree *type_decl = alloc_tree(1);
+  type_decl->loc = loc;
   type_decl->type = TYPE_DECL;
   type_decl->type_decl.type = type;
   type_decl->type_decl.symbol_list = symbol_list;
@@ -935,10 +964,21 @@ struct tree *build_cast(struct location loc, struct tree *type,
                         struct tree *expr) {
 
   struct tree *cast_expr = alloc_tree(1);
+  cast_expr->loc = loc;
   cast_expr->type = CAST_EXPR;
   cast_expr->cast_expr.type = type;
   cast_expr->cast_expr.expr = expr;
   return cast_expr;
+}
+
+struct tree *build_lambda_key(struct location loc, char *key,
+                              struct tree *expr) {
+  struct tree *lambda_key = alloc_tree(1);
+  lambda_key->loc = loc;
+  lambda_key->type = LAMBDA_KEY;
+  lambda_key->lambda_key.key_name = key;
+  lambda_key->lambda_key.expr = expr;
+  return lambda_key;
 }
 
 int get_bool(struct tree *t) {

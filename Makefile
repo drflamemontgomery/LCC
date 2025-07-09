@@ -2,7 +2,7 @@ CC=gcc
 
 C_OBJS:=src/lexer.o src/lang.o src/tree.o src/pass.o
 
-CFLAGS+= -lm -fsanitize=leak -g
+CFLAGS+= -lm -fsanitize=leak -g -Wunused
 
 EXE:=lcc
 

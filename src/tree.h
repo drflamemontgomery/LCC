@@ -66,6 +66,7 @@ struct tree {
   enum tree_type type;
   struct tree *next;
   struct location loc;
+  bool valid;
 
   union {
 #define DEFTREECODE(ENUM, ID, ...) __VA_OPT__(struct {__VA_ARGS__} ID;)
@@ -126,6 +127,8 @@ struct tree *build_cast(struct location loc, struct tree *type,
 struct tree *build_lambda_list(struct location loc, struct tree *args,
                                struct tree *optionals, struct tree *rest,
                                struct tree *keys, struct tree *aux);
+struct tree *build_lambda_key(struct location loc, char *key,
+                              struct tree *expr);
 
 struct tree *build_type_decl(struct location loc, struct tree *type,
                              struct tree *symbol_list);
@@ -147,3 +150,4 @@ bool is_monomorph(struct tree *t);
 void resolve_pass(struct tree *t);
 const char *get_tree_type(struct tree *t);
 void copy_type_to_type(struct tree *dest, struct tree *src);
+struct tree *copy_tree(struct tree *t);
